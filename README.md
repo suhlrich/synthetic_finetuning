@@ -6,3 +6,4 @@ install pytorch
 
 install requirements
 `conda install --file requirements.txt`
+`pip install -r requirements-pip.txt`
