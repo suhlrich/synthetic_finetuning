@@ -7,3 +7,6 @@ install cuda toolkit that matches your cuda install
 install requirements
 `conda install --file requirements.txt -c conda-forge -c pytorch`
 `pip install -r requirements-pip.txt`
+
+download smplx model and put in models folder
+https://smpl-x.is.tue.mpg.de/download.php
