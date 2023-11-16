@@ -55,7 +55,7 @@ exercises = [
 K1 = np.array([[311.11, 0.0, 112.0], [0.0, 311.11, 112.0], [0.0, 0.0, 1.0]])
 K2 = np.array([[245.0, 0.0, 112.0], [0.0, 245.0, 112.0], [0.0, 0.0, 1.0]])
 
-AUGMENTED_VERTICES_FILE_PATH = "synthetic_finetuning/data/vertices_keypoints_corr.csv"
+AUGMENTED_VERTICES_FILE_PATH = "data/vertices_keypoints_corr.csv"
 AUGMENTED_VERTICES_INDEX_DICT = load_augmented_corr()
 AUGMENTED_VERTICES_NAMES = list(AUGMENTED_VERTICES_INDEX_DICT.keys())
 COCO_VERTICES_NAME = [

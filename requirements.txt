@@ -1,0 +1,6 @@
+pytorch
+torchvision
+torchaudio
+pyrender
+trimesh
+pillow

@@ -1,5 +1,5 @@
 import numpy as np
-import pyrender
+# import pyrender
 import smplx
 import torch
 import trimesh
@@ -107,43 +107,43 @@ def get_augmented_vertices(vertices):
     )
 
 
-def show_mesh(
-    scene,
-    viewer,
-    vertices,
-    augmented_vertices,
-    model,
-    joints,
-    plot_augmented_vertices=True,
-    plot_joints=False,
-    nodes=[],
-):
-    vertex_colors = np.ones([vertices.shape[0], 4]) * [0.3, 0.3, 0.3, 0.8]
-    tri_mesh = trimesh.Trimesh(vertices, model.faces, vertex_colors=vertex_colors)
+# def show_mesh(
+#     scene,
+#     viewer,
+#     vertices,
+#     augmented_vertices,
+#     model,
+#     joints,
+#     plot_augmented_vertices=True,
+#     plot_joints=False,
+#     nodes=[],
+# ):
+#     vertex_colors = np.ones([vertices.shape[0], 4]) * [0.3, 0.3, 0.3, 0.8]
+#     tri_mesh = trimesh.Trimesh(vertices, model.faces, vertex_colors=vertex_colors)
 
-    mesh = pyrender.Mesh.from_trimesh(tri_mesh)
-    viewer.render_lock.acquire()
-    for node in nodes:
-        scene.remove_node(node)
+#     mesh = pyrender.Mesh.from_trimesh(tri_mesh)
+#     viewer.render_lock.acquire()
+#     for node in nodes:
+#         scene.remove_node(node)
 
-    nodes = [scene.add(mesh, "body")]
+#     nodes = [scene.add(mesh, "body")]
 
-    if plot_joints:
-        sm = trimesh.creation.uv_sphere(radius=0.005)
-        sm.visual.vertex_colors = [0.9, 0.1, 0.1, 1.0]
-        tfs = np.tile(np.eye(4), (len(joints), 1, 1))
-        tfs[:, :3, 3] = joints
-        joints_pcl = pyrender.Mesh.from_trimesh(sm, poses=tfs)
-        nodes += [scene.add(joints_pcl, name="joints")]
+#     if plot_joints:
+#         sm = trimesh.creation.uv_sphere(radius=0.005)
+#         sm.visual.vertex_colors = [0.9, 0.1, 0.1, 1.0]
+#         tfs = np.tile(np.eye(4), (len(joints), 1, 1))
+#         tfs[:, :3, 3] = joints
+#         joints_pcl = pyrender.Mesh.from_trimesh(sm, poses=tfs)
+#         nodes += [scene.add(joints_pcl, name="joints")]
 
-    if plot_augmented_vertices:
-        sm = trimesh.creation.uv_sphere(radius=0.01)
-        sm.visual.vertex_colors = [0.1, 0.1, 0.9, 1.0]
-        tfs = np.tile(np.eye(4), (len(augmented_vertices), 1, 1))
-        tfs[:, :3, 3] = augmented_vertices
-        joints_pcl = pyrender.Mesh.from_trimesh(sm, poses=tfs)
-        nodes += [scene.add(joints_pcl, name="vertices")]
+#     if plot_augmented_vertices:
+#         sm = trimesh.creation.uv_sphere(radius=0.01)
+#         sm.visual.vertex_colors = [0.1, 0.1, 0.9, 1.0]
+#         tfs = np.tile(np.eye(4), (len(augmented_vertices), 1, 1))
+#         tfs[:, :3, 3] = augmented_vertices
+#         joints_pcl = pyrender.Mesh.from_trimesh(sm, poses=tfs)
+#         nodes += [scene.add(joints_pcl, name="vertices")]
 
-    viewer.render_lock.release()
+#     viewer.render_lock.release()
 
-    return nodes
+#     return nodes
