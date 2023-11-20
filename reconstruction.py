@@ -2,8 +2,14 @@ import numpy as np
 # import pyrender
 import smplx
 import torch
+import os
 import trimesh
 from constants import AUGMENTED_VERTICES_INDEX_DICT, JOINT_NAMES, K1, K2
+
+# from slahmr
+from body_model import BodyModel
+
+
 
 
 def get_axis_angle_from_ann(ann, start_index, end_index):
@@ -72,29 +78,42 @@ def get_smplx_model(
     gender,
     betas,
     poses,
+    model_type='smplx'
 ):
-    return smplx.create(
-        model_folder,
-        model_type="smplx",
-        gender=gender,
-        use_face_contour=False,
-        num_betas=10,
-        num_expression_coeffs=10,
-        ext="npz",
-        betas=betas,
-        body_pose=poses["body_pose"],
-        left_hand_pose=poses["left_hand_pose"],
-        right_hand_pose=poses["right_hand_pose"],
-        jaw_pose=poses["jaw_pose"],
-        leye_pose=poses["leye_pose"],
-        reye_pose=poses["reye_pose"],
-        use_pca=False,
-        flat_hand_mean=True,
-    )
+    # Create a dictionary to store the keyword arguments
+    kwargs = {
+        'model_type': model_type,
+        'gender': gender,
+        'use_face_contour': False,
+        'num_betas': max(betas.size()),
+        'num_expression_coeffs': 10,
+        'ext': 'npz',
+        'betas': betas,
+        'use_pca': False,
+        'flat_hand_mean': True,
+    }
+
+    # Add pose-related arguments only if they exist in the poses dictionary
+    pose_keys = [
+        'body_pose',
+        'left_hand_pose',
+        'right_hand_pose',
+        'jaw_pose',
+        'leye_pose',
+        'reye_pose'
+    ]
+
+    for key in pose_keys:
+        if key in poses:
+            kwargs[key] = poses[key]
+
+    # Create and return the smplx model with the constructed kwargs
+    return smplx.create(model_folder,**kwargs)
 
 
-def get_vertices_and_joints(model, betas):
-    output = model(betas=betas, expression=None, return_verts=True)
+
+def get_vertices_and_joints(model, betas, kwargs = None):
+    output = model(betas=betas, expression=None, return_verts=True,**kwargs)
     vertices = output.vertices.detach().cpu().numpy().squeeze()
     joints = output.joints.detach().cpu().numpy().squeeze()
 
@@ -104,6 +123,33 @@ def get_vertices_and_joints(model, betas):
 def get_augmented_vertices(vertices):
     return np.array(
         [vertices[vertex] for vertex in AUGMENTED_VERTICES_INDEX_DICT.values()]
+    )
+
+
+# From SLAHMR
+def load_smpl_body_model(
+    path,
+    batch_size,
+    num_betas=16,
+    model_type="smplh",
+    use_vtx_selector=True,
+    device=None,
+):
+    """
+    Load SMPL model
+    """
+    if device is None:
+        device = torch.device("cpu")
+    fit_gender = path.split("/")[-2]
+    return (
+        BodyModel(
+            bm_path=path,
+            num_betas=num_betas,
+            batch_size=batch_size,
+            use_vtx_selector=use_vtx_selector,
+            model_type=model_type,
+        ).to(device),
+        fit_gender,
     )
 
 
