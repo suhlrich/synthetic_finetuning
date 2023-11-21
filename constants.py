@@ -78,6 +78,13 @@ COCO_VERTICES_NAME = [
     "right_ankle",
 ]
 
+OPENPOSE_VERTICES_NAME = [
+    'Nose', 'Neck', 'RShoulder', 'RElbow', 'RWrist', 'LShoulder', 'LElbow',
+    'LWrist', 'MidHip', 'RHip', 'RKnee', 'RAnkle', 'LHip', 'LKnee', 'LAnkle',
+    'REye', 'LEye', 'REar', 'LEar', 'LBigToe', 'LSmallToe', 'LHeel', 'RBigToe',
+    'RSmallToe', 'RHeel'
+]
+
 MODEL_FOLDER = "./models"
 
 

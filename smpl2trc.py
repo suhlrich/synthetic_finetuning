@@ -13,11 +13,16 @@ import numpy as np
 
 import utilsDataman
 import reconstruction
+from constants import AUGMENTED_VERTICES_INDEX_DICT, OPENPOSE_VERTICES_NAME
 
-# copied from slahmr
-from geometry.plane import parse_floor_plane, get_plane_transform
+# from slahmr
+from slahmr.slahmr.geometry.plane import parse_floor_plane, get_plane_transform
+from slahmr.slahmr.body_model import SMPL_JOINTS, KEYPT_VERTS, smpl_to_openpose, run_smpl
+from slahmr.slahmr.util.loaders import load_smpl_body_model
+
 
 from constants import MODEL_FOLDER, AUGMENTED_VERTICES_INDEX_DICT
+
 
 
 # # # user edited
@@ -136,7 +141,62 @@ def load_result(res_path_dict):
         res_dict[name] = to_torch({k: res[k] for k in res.files})
     return res_dict
 
+# Add openpose joints
+# from SLAHMR optim base_scene
 
+def pred_smpl(body_model,trans, root_orient, body_pose, betas):
+    """
+    Forward pass of the SMPL model and populates pred_data accordingly with
+    joints3d, verts3d, points3d.
+
+    trans : B x T x 3
+    root_orient : B x T x 3
+    body_pose : B x T x J*3
+    betas : B x D
+    """
+    smpl2op_map = smpl_to_openpose(
+        'smplx',
+        use_hands=False,
+        use_face=False,
+        use_face_contour=False,
+        openpose_format="coco25",
+    ) 
+    
+    smpl_out = run_smpl(body_model, trans, root_orient, body_pose, betas)
+    joints3d, points3d = smpl_out["joints"], smpl_out["vertices"]
+
+    # select desired joints and vertices
+    joints3d_body = joints3d[:, :, : len(SMPL_JOINTS), :]
+    extra_vertices = joints3d[:, :, len(SMPL_JOINTS):, :]
+    joints3d_op = joints3d[:, :, smpl2op_map, :]
+    # hacky way to get hip joints that align with ViTPose keypoints
+    # this could be moved elsewhere in the future (and done properly)
+    joints3d_op[:, :, [9, 12]] = (
+        joints3d_op[:, :, [9, 12]]
+        + 0.25 * (joints3d_op[:, :, [9, 12]] - joints3d_op[:, :, [12, 9]])
+        + 0.5
+        * (
+            joints3d_op[:, :, [8]]
+            - 0.5 * (joints3d_op[:, :, [9, 12]] + joints3d_op[:, :, [12, 9]])
+        )
+    )
+    verts3d = points3d[:, :, KEYPT_VERTS, :]
+
+    return {
+        "points3d": points3d,  # all vertices
+        "verts3d": verts3d,  # keypoint vertices
+        "joints3d": joints3d_body,  # smpl joints
+        "extra_vertices": extra_vertices, # extra vertices that we defined
+        "joints3d_op": joints3d_op,  # OP joints
+        "faces": smpl_out["faces"],  # index array of faces
+    }
+
+def get_vertices(vertex_idx,vertices):
+    return np.moveaxis(
+        np.array(
+        [vertices[:,vertex,:] for vertex in vertex_idx.values()]
+        ),(0,1),(1,0)
+    )
 
 
 # # # # Main
@@ -206,36 +266,43 @@ if runSLAHMR:
     nSteps = results['pose_body'].shape[1]
     augmented_vertices= np.zeros((nSteps,len(markerNames)*3))
 
-    # TODO - don't think this has to be a loop. See load_smpl_body_model in slahmr
-    # TODO - output joint centers too. There's a mapping for hjc in slahmr
-    for i in range(nSteps):
-        poses = {'body_pose': torch.from_numpy(results['pose_body'][0,i:i+1,:])}
-        global_orient = torch.from_numpy(results['root_orient'][0,i:i+1,:])
-        transl = torch.from_numpy(results['trans'][0,i:i+1,:])
-        smplx_model = reconstruction.get_smplx_model(
-            MODEL_FOLDER,
-            gender = 'neutral',
-            betas = betas,
-            poses = poses,
-            model_type = 'smplx')
-        
-        kwargs = {'global_orient':global_orient, 
-                  'transl': transl}
-        vertices, joints = reconstruction.get_vertices_and_joints(smplx_model, betas, 
-                                                                  kwargs = kwargs)
-        augmented_vertices[i,:] = reconstruction.get_augmented_vertices(vertices).reshape(1,-1)
-        
-    origin_position = np.tile(augmented_vertices[:1, :3], (1,int(augmented_vertices.shape[1]/3)))
-    augmented_vertices -= origin_position
-        
-    # write trc
-    write_trc(augmented_vertices,output_trc_path,markerNames,frameRate=30,
-              rotationAngles={'X':groundR[0],'Y':groundR[1],'Z':groundR[2]})
-
-
-
+    # Get openpose points
     
-
+    B,T,_ = results['trans'].shape
+    
+    body_model,gender = load_smpl_body_model(
+                    path = os.path.join(MODEL_FOLDER,'smplx','SMPLX_MALE.npz'),
+                    batch_size=B*T,
+                    num_betas=16,
+                    model_type="smplx",
+                    use_vtx_selector=True,
+                    device=None,
+                    fit_gender = 'male',
+                    npz_hack = False,
+                    #extra_vertices = AUGMENTED_VERTICES_INDEX_DICT
+                )
+    
+    preds = pred_smpl( body_model= body_model,
+               trans = torch.from_numpy(results['trans']), 
+               root_orient= torch.from_numpy(results['root_orient']), 
+               body_pose=torch.from_numpy(results['pose_body']), 
+               betas=torch.from_numpy(results['betas']))    
+    
+    marker_names = list(AUGMENTED_VERTICES_INDEX_DICT.keys()) + OPENPOSE_VERTICES_NAME
+    nPerson = 0
+    nOpenPose = preds['joints3d_op'].shape[2]
+    nVertices = len(body_model.vertex_ids)
+    marker_positions = np.hstack((
+                                get_vertices(AUGMENTED_VERTICES_INDEX_DICT,
+                                           preds['points3d'].detach()[nPerson,...].numpy()).reshape(
+                                           (T,-1)),
+                                preds['joints3d_op'].detach()[nPerson,...].numpy().reshape(
+                                  (T,-1))
+                                ))
+ 
+    # write trc
+    write_trc(marker_positions,output_trc_path,marker_names,frameRate=30,
+              rotationAngles={'X':groundR[0],'Y':groundR[1],'Z':groundR[2]})
 
 
 

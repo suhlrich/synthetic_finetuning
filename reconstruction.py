@@ -7,7 +7,7 @@ import trimesh
 from constants import AUGMENTED_VERTICES_INDEX_DICT, JOINT_NAMES, K1, K2
 
 # from slahmr
-from body_model import BodyModel
+from slahmr.slahmr.body_model import BodyModel
 
 
 
@@ -126,31 +126,31 @@ def get_augmented_vertices(vertices):
     )
 
 
-# From SLAHMR
-def load_smpl_body_model(
-    path,
-    batch_size,
-    num_betas=16,
-    model_type="smplh",
-    use_vtx_selector=True,
-    device=None,
-):
-    """
-    Load SMPL model
-    """
-    if device is None:
-        device = torch.device("cpu")
-    fit_gender = path.split("/")[-2]
-    return (
-        BodyModel(
-            bm_path=path,
-            num_betas=num_betas,
-            batch_size=batch_size,
-            use_vtx_selector=use_vtx_selector,
-            model_type=model_type,
-        ).to(device),
-        fit_gender,
-    )
+# # From SLAHMR
+# def load_smpl_body_model(
+#     path,
+#     batch_size,
+#     num_betas=16,
+#     model_type="smplh",
+#     use_vtx_selector=True,
+#     device=None,
+# ):
+#     """
+#     Load SMPL model
+#     """
+#     if device is None:
+#         device = torch.device("cpu")
+#     fit_gender = path.split("/")[-2]
+#     return (
+#         BodyModel(
+#             bm_path=path,
+#             num_betas=num_betas,
+#             batch_size=batch_size,
+#             use_vtx_selector=use_vtx_selector,
+#             model_type=model_type,
+#         ).to(device),
+#         fit_gender,
+#     )
 
 
 # def show_mesh(

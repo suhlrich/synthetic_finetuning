@@ -1,0 +1,3 @@
+[submodule "slahmr"]
+	path = slahmr
+	url = https://github.com/suhlrich/slahmr
