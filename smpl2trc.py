@@ -232,11 +232,31 @@ if runYoni:
     
 
 if runSLAHMR: 
-    # From SLAHMR output
-    resultsPath = ('C:/SharedGdrive/sparseIK/monocularModelTesting/SLAHMR/walk-all-shot-0-0-180/' +
-                  'motion_chunks/walk_000200_world_results.npz')
+    slahmr_dir = 'C:/SharedGdrive/sparseIK/monocularModelTesting/SLAHMR/'
+    
+    # opencap walking_4
+    # resultsPath = os.path.join(slahmr_dir,
+    #             'walking4_syncdWithMocap-all-shot-0-0-180/motion_chunks',
+    #             'walking4_syncdWithMocap_000140_world_results.npz')
+    # visRotation = 0
+    
+    # opencap walking_TS1
+    resultsPath = os.path.join(slahmr_dir,
+                               'walkingTS2_syncdWithMocap-all-shot-0-0-180/motion_chunks',
+                               'walkingTS2_syncdWithMocap_000140_world_results.npz')
+    visRotation = 180
+    
+    # original walking example
+    # resultsPath = os.path.join(resultsPath,'walk-all-shot-0-0-180/' +
+    #               'motion_chunks/walk_000200_world_results.npz'')
+    # visRotation = 180
+    
+    # Varied Activities
     # resultsPath = ('C:/SharedGdrive/sparseIK/monocularModelTesting/SLAHMR/variedActivities2-all-shot-0-0-180/' +
     #               'motion_chunks/variedActivities2_000340_world_results.npz')
+    
+    
+    
     result_base_path, _ = os.path.splitext(resultsPath)
     output_trc_path = result_base_path + '.trc'
     
@@ -255,7 +275,7 @@ if runSLAHMR:
     
     # Convert rotation matrix to Euler angles
     r_ground = Rotation.from_matrix(R.numpy().T)
-    r_vis = Rotation.from_euler('x', 180, degrees=True)
+    r_vis = Rotation.from_euler('x', visRotation, degrees=True)
     r = r_ground*r_vis
     groundR = r.as_euler('xyz', degrees=True) 
         
