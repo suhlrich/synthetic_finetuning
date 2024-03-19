@@ -240,11 +240,32 @@ if runSLAHMR:
     #             'walking4_syncdWithMocap_000140_world_results.npz')
     # visRotation = 0
     
-    # opencap walking_TS1
+    # # walking_TS2 - frontal
+    # resultsPath = os.path.join(slahmr_dir,
+    #                           'walkingTS2_syncdWithMocap_cam2(frontal)-all-shot-0-0-400-20231205T094234Z-001\motion_chunks',
+    #                           'walkingTS2_syncdWithMocap_cam2_000140_world_results.npz')
+    # visRotation = 180
+    # visRotationY = -90
+
+    # # walking_TS2 - sagittal right
     resultsPath = os.path.join(slahmr_dir,
-                               'walkingTS2_syncdWithMocap-all-shot-0-0-180/motion_chunks',
-                               'walkingTS2_syncdWithMocap_000140_world_results.npz')
+                                'walkingTS2_syncdWithMocap_cam4(sagittal-right)-all-shot-0-0-400-20231205T094237Z-001\motion_chunks',
+                                'walkingTS2_syncdWithMocap_cam4_000140_world_results.npz')
     visRotation = 180
+    visRotationY = -160
+
+    
+    # walking_TS2 - sagittal left
+    # resultsPath = os.path.join(slahmr_dir,
+    #                            'walkingTS2_syncdWithMocap_cam0(sagittal-left)-all-shot-0-0-400-20231205T094231Z-001\motion_chunks',
+    #                            'walkingTS2_syncdWithMocap_cam0_000140_world_results.npz')
+    # visRotation = 180
+    
+    # opencap walking_TS1
+    # resultsPath = os.path.join(slahmr_dir,
+    #                            'walkingTS2_syncdWithMocap-all-shot-0-0-180/motion_chunks',
+    #                            'walkingTS2_syncdWithMocap_000140_world_results.npz')
+    # visRotation = 180
     
     # original walking example
     # resultsPath = os.path.join(resultsPath,'walk-all-shot-0-0-180/' +
@@ -276,7 +297,8 @@ if runSLAHMR:
     # Convert rotation matrix to Euler angles
     r_ground = Rotation.from_matrix(R.numpy().T)
     r_vis = Rotation.from_euler('x', visRotation, degrees=True)
-    r = r_ground*r_vis
+    r_vis2 = Rotation.from_euler('y',visRotationY,degrees=True)
+    r = r_ground*r_vis*r_vis2
     groundR = r.as_euler('xyz', degrees=True) 
         
     # constants
